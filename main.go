@@ -239,7 +239,6 @@ func (cpu CPU) Interpreter(b uint16) {
 		}
 
 	}
-	return 0
 }
 
 func Start() error {
