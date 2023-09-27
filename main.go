@@ -29,8 +29,9 @@ type Screen struct {
 }
 
 var (
-	chip8 = Chip8{}
-	ROM   = []byte{}
+	chip8  = Chip8{}
+	ROM    = []byte{}
+	screen *ebiten.Image
 )
 
 const (
@@ -133,11 +134,7 @@ func (cpu CPU) Interpreter(b uint16) {
 		case 0x0000:
 			//0x0000 CLS -> Clear the display.
 			fmt.Println("CLS")
-			for i, x := range chip8.screen.s {
-				for j, _ := range x {
-					chip8.screen.s[i][j] = color.White
-				}
-			}
+			screen.Fill(ebitenutil.ColorRGB(0, 0, 0))
 		case 0x000E:
 			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
