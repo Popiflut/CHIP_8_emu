@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"log"
 	"os"
@@ -49,6 +50,28 @@ type Console struct {
 	command string
 }
 
+func init() {
+	var fontSet = []byte{
+		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+		0x20, 0x60, 0x20, 0x20, 0x70, // 1
+		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+		0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+		0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+		0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+		0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+		0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+		0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+		0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+		0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+		0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+		0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+		0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+		0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+	}
+	LoadROM(fontSet) // Charge le fontSet dans la memoire
+}
+
 // NewConsole initialise un nouveau jeu.
 func NewConsole() *Console {
 	console := &Console{}
@@ -60,7 +83,7 @@ func (g *Console) Update() error {
 	chip8.cpu.pc += 2
 	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
-	if chip8.cpu.pc >= len(ROM)+0x200 {
+	if chip8.cpu.pc >= len(ROM)+0xFFF { // remettre a 0x200
 		os.Exit(0)
 	}
 	return nil
@@ -70,7 +93,7 @@ func (g *Console) Update() error {
 func (g *Console) Draw(screen *ebiten.Image) {
 	for x := 0; x < len(chip8.screen.s); x++ {
 		for y := 0; y < len(chip8.screen.s[x]); y++ {
-			//ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), 1, 1, chip8.screen.s[x][y])
+			ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
 		}
 	}
 }
@@ -120,26 +143,52 @@ func (cpu CPU) Interpreter(b uint16) uint16 {
 	case 0x0000:
 		switch b & 0x000F {
 		case 0x0000:
+			//0x0000 CLS -> Clear the display.
 			fmt.Println("CLS")
-			//remplacer toutes les valeurs de screen[][] pour du noir
+			for i, x := range chip8.screen.s {
+				for j, _ := range x {
+					chip8.screen.s[i][j] = color.White
+				}
+			}
 		case 0x000E:
 			fmt.Println("RET")
+			//0x000E RET -> Return from a subroutine.
+			return uint16(chip8.cpu.memory[chip8.cpu.pc-1])
 		}
 	case 0x1000:
 		fmt.Printf("JP addr = %d\n", int(b&0x0FFF))
-		chip8.cpu.pc = int(b & 0x0FFF)
+		//0x1NNN JP addr -> Jump to location nnn.
+		return b & 0x0FFF
 	case 0x2000:
 		fmt.Println("CALL addr")
+		//0x2NNN CALL addr -> Call subroutine at nnn.
+		return uint16(chip8.cpu.memory[chip8.cpu.pc-1])
 	case 0x3000:
 		fmt.Println("SE Vx, byte")
+		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
+		if chip8.cpu.v[(b&0x0F00)>>8] == uint8(b&0x00FF) {
+			chip8.cpu.pc += 2
+		}
 	case 0x4000:
 		fmt.Println("SNE Vx, byte")
+		//0x4XNN SNE Vx, byte -> Skip next instruction if Vx != kk.
+		if chip8.cpu.v[(b&0x0F00)>>8] != uint8(b&0x00FF) {
+			chip8.cpu.pc += 2
+		}
 	case 0x5000:
 		fmt.Println(" SE Vx, Vy")
+		//0x5XY0 SE Vx, Vy -> Skip next instruction if Vx = Vy.
+		if chip8.cpu.v[(b&0x0F00)>>8] == chip8.cpu.v[(b&0x00F0)>>4] {
+			chip8.cpu.pc += 2
+		}
 	case 0x6000:
 		fmt.Println("LD Vx, byte")
+		//0x6XNN LD Vx, byte -> Set Vx = kk.
+		chip8.cpu.v[(b&0x0F00)>>8] = uint8(b & 0x00FF)
 	case 0x7000:
 		fmt.Println("ADD Vx, byte")
+		//0x7XNN ADD Vx, byte -> Set Vx = Vx + kk.
+		chip8.cpu.v[(b&0x0F00)>>8] += uint8(b & 0x00FF)
 	case 0x8000:
 		switch b & 0x000F {
 		case 0x0000:
@@ -208,7 +257,7 @@ func (cpu CPU) Interpreter(b uint16) uint16 {
 }
 
 func Start() error {
-	//LoadProgram()
+	LoadProgram()
 	file, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		return err
@@ -231,4 +280,12 @@ func main() {
 		fmt.Println("ERROR system start")
 		return
 	}
+}
+
+func unit16to8(a uint16) (uint8, uint8) {
+	return uint8(a >> 8), uint8(a & 0x00FF)
+}
+
+func unit8to4(a uint8) (uint8, uint8) {
+	return uint8(a >> 4), uint8(a & 0x0F)
 }
