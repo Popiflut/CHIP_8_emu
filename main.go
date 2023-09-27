@@ -58,6 +58,7 @@ func NewConsole() *Console {
 // Update met à jour l'état du jeu à chaque trame.
 func (g *Console) Update() error {
 	chip8.cpu.pc += 2
+	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	if chip8.cpu.pc >= len(ROM)+0x200 {
 		os.Exit(0)
@@ -125,6 +126,7 @@ func (cpu CPU) Interpreter(b uint16) uint16 {
 			fmt.Println("RET")
 		}
 	case 0x1000:
+		fmt.Printf("JP addr = %d\n", int(b&0x0FFF))
 		chip8.cpu.pc = int(b & 0x0FFF)
 	case 0x2000:
 		fmt.Println("CALL addr")
@@ -213,7 +215,7 @@ func Start() error {
 	}
 	ROM = file
 	LoadROM(file)
-	chip8.cpu.pc = 0x198
+	chip8.cpu.pc = 0x1FE
 	fmt.Println("Loading ROM...")
 	fmt.Println("ROM size: ", len(file))
 	fmt.Println("Chip8 Emulator")
