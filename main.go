@@ -3,15 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"log"
 	"os"
-)
-
-var (
-	chip8 = Chip8{}
-	ROM   = []byte{}
 )
 
 type CPU struct {
@@ -34,6 +28,11 @@ type Screen struct {
 	s [64][32]color.Color
 }
 
+var (
+	chip8 = Chip8{}
+	ROM   = []byte{}
+)
+
 const (
 	screenWidth  = 640
 	screenHeight = 480
@@ -50,7 +49,7 @@ type Console struct {
 	command string
 }
 
-func init() {
+func Init() {
 	var fontSet = []byte{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 		0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -69,7 +68,9 @@ func init() {
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 	}
-	LoadROM(fontSet) // Charge le fontSet dans la memoire
+	for i := 0; i < len(fontSet); i++ {
+		chip8.cpu.memory[i] = fontSet[i]
+	}
 }
 
 // NewConsole initialise un nouveau jeu.
@@ -83,7 +84,7 @@ func (g *Console) Update() error {
 	chip8.cpu.pc += 2
 	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
-	if chip8.cpu.pc >= len(ROM)+0xFFF { // remettre a 0x200
+	if chip8.cpu.pc >= len(ROM)+0x200 { // remettre a 0x200
 		os.Exit(0)
 	}
 	return nil
@@ -93,7 +94,7 @@ func (g *Console) Update() error {
 func (g *Console) Draw(screen *ebiten.Image) {
 	for x := 0; x < len(chip8.screen.s); x++ {
 		for y := 0; y < len(chip8.screen.s[x]); y++ {
-			ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
+			//ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
 		}
 	}
 }
@@ -257,12 +258,12 @@ func (cpu CPU) Interpreter(b uint16) uint16 {
 }
 
 func Start() error {
-	LoadProgram()
 	file, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		return err
 	}
 	ROM = file
+	Init()
 	LoadROM(file)
 	chip8.cpu.pc = 0x1FE
 	fmt.Println("Loading ROM...")
