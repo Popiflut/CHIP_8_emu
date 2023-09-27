@@ -134,10 +134,15 @@ func (cpu CPU) Interpreter(b uint16) {
 		case 0x0000:
 			//0x0000 CLS -> Clear the display.
 			fmt.Println("CLS")
-			screen.Fill(ebitenutil.ColorRGB(0, 0, 0))
+			for i, x := range chip8.screen.s {
+				for j, _ := range x {
+					chip8.screen.s[i][j] = color.Black
+				}
+			}
 		case 0x000E:
 			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
+			chip8.cpu.pc = int(chip8.cpu.memory[chip8.cpu.pc-1])
 		}
 	case 0x1000:
 		fmt.Printf("JP addr = %d\n", int(b&0x0FFF))
@@ -146,6 +151,7 @@ func (cpu CPU) Interpreter(b uint16) {
 	case 0x2000:
 		fmt.Println("CALL addr")
 		//0x2NNN CALL addr -> Call subroutine at nnn.
+		chip8.cpu.memory[chip8.cpu.pc-1] = uint8(chip8.cpu.pc)
 	case 0x3000:
 		fmt.Println("SE Vx, byte")
 		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
