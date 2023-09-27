@@ -126,20 +126,7 @@ func LoadROM(file []byte) {
 	}
 }
 
-//func Emu() {
-//	for i := 0x200; i < len(chip8.cpu.memory)-1; i += 2 {
-//		//fmt.Printf("0x%04X: ", (uint16(chip8.cpu.memory[i])<<8)|uint16(chip8.cpu.memory[i+1]))
-//		jmp := Interpreter((uint16(chip8.cpu.memory[i]) << 8) | uint16(chip8.cpu.memory[i+1]))
-//		if jmp != 0 {
-//			fmt.Println(int(jmp & 0x0FFF))
-//			fmt.Printf("JMP i =%d and now i = ", i)
-//			i = int(jmp & 0x0FFF)
-//			fmt.Println(i)
-//		}
-//	}
-//}
-
-func (cpu CPU) Interpreter(b uint16) uint16 {
+func (cpu CPU) Interpreter(b uint16) {
 	switch b & 0xF000 {
 	case 0x0000:
 		switch b & 0x000F {
@@ -154,16 +141,14 @@ func (cpu CPU) Interpreter(b uint16) uint16 {
 		case 0x000E:
 			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
-			return uint16(chip8.cpu.memory[chip8.cpu.pc-1])
 		}
 	case 0x1000:
 		fmt.Printf("JP addr = %d\n", int(b&0x0FFF))
 		//0x1NNN JP addr -> Jump to location nnn.
-		return b & 0x0FFF
+		chip8.cpu.pc = int(b & 0x0FFF)
 	case 0x2000:
 		fmt.Println("CALL addr")
 		//0x2NNN CALL addr -> Call subroutine at nnn.
-		return uint16(chip8.cpu.memory[chip8.cpu.pc-1])
 	case 0x3000:
 		fmt.Println("SE Vx, byte")
 		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
