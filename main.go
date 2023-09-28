@@ -147,7 +147,7 @@ func (cpu *CPU) Interpreter(b uint16) {
 		case 0x000E:
 			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
-			chip8.cpu.pc = uint16(int(chip8.cpu.memory[chip8.cpu.pc-1]))
+			chip8.cpu.pc = StackPop()
 		}
 	case 0x1000:
 		fmt.Printf("JP addr = %x\n", b&0x0FFF)
@@ -156,9 +156,8 @@ func (cpu *CPU) Interpreter(b uint16) {
 	case 0x2000:
 		fmt.Println("CALL addr")
 		//0x2NNN CALL addr -> Call subroutine at nnn.
-		chip8.cpu.stack[chip8.cpu.sp] = chip8.cpu.pc
-		chip8.cpu.sp++
-		chip8.cpu.pc += 2
+		StackPush(chip8.cpu.pc)
+		chip8.cpu.pc = b&0x0FFF - 2
 	case 0x3000:
 		fmt.Println("SE Vx, byte")
 		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
@@ -296,4 +295,14 @@ func unit16to8(a uint16) (uint8, uint8) {
 
 func unit8to4(a uint8) (uint8, uint8) {
 	return uint8(a >> 4), uint8(a & 0x0F)
+}
+
+func StackPush(pc uint16) {
+	chip8.cpu.stack[chip8.cpu.sp] = pc
+	chip8.cpu.sp++
+}
+
+func StackPop() uint16 {
+	chip8.cpu.sp--
+	return chip8.cpu.stack[chip8.cpu.sp]
 }
