@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"log"
 	"os"
@@ -12,7 +12,10 @@ import (
 type CPU struct {
 	memory [4096]byte
 	v      [16]uint8
-	pc     int
+	pc     uint16
+	i      uint16
+	sp     uint16
+	stack  [16]uint16
 }
 
 type Chip8 struct {
@@ -26,17 +29,18 @@ type Clavier struct {
 }
 
 type Screen struct {
-	s [64][32]color.Color
+	mapscreen [64][32]uint8
 }
 
 var (
-	chip8 = Chip8{}
-	ROM   = []byte{}
+	chip8  = Chip8{}
+	ROM    []byte
+	screen *ebiten.Image
 )
 
 const (
 	screenWidth  = 640
-	screenHeight = 480
+	screenHeight = 320
 	resolWidth   = 64
 	resolHeight  = 32
 )
@@ -80,22 +84,23 @@ func NewConsole() *Console {
 	return console
 }
 
-// Update met à jour l'état du jeu à chaque trame.
 func (g *Console) Update() error {
 	chip8.cpu.pc += 2
 	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
-	if chip8.cpu.pc >= len(ROM)+0x200 { // remettre a 0x200
-		os.Exit(0)
-	}
 	return nil
 }
 
-// Draw dessine le jeu sur l'écran
 func (g *Console) Draw(screen *ebiten.Image) {
-	for x := 0; x < len(chip8.screen.s); x++ {
-		for y := 0; y < len(chip8.screen.s[x]); y++ {
-			ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
+	for x, row := range chip8.screen.mapscreen {
+		for y, pixel := range row {
+			var c color.Color
+			if pixel == 1 {
+				c = color.White
+			} else {
+				c = color.Black
+			}
+			screen.Set(x, y, c)
 		}
 	}
 }
@@ -127,31 +132,33 @@ func LoadROM(file []byte) {
 	}
 }
 
-func (cpu CPU) Interpreter(b uint16) {
+func (cpu *CPU) Interpreter(b uint16) {
 	switch b & 0xF000 {
 	case 0x0000:
 		switch b & 0x000F {
 		case 0x0000:
 			//0x0000 CLS -> Clear the display.
 			fmt.Println("CLS")
-			for i, x := range chip8.screen.s {
-				for j, _ := range x {
-					chip8.screen.s[i][j] = color.Black
+			for i := 0; i < resolWidth; i++ {
+				for j := 0; j < resolHeight; j++ {
+					chip8.screen.mapscreen[i][j] = 0
 				}
 			}
 		case 0x000E:
 			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
-			chip8.cpu.pc = int(chip8.cpu.memory[chip8.cpu.pc-1])
+			chip8.cpu.pc = uint16(int(chip8.cpu.memory[chip8.cpu.pc-1]))
 		}
 	case 0x1000:
-		fmt.Printf("JP addr = %d\n", int(b&0x0FFF))
+		fmt.Printf("JP addr = %x\n", b&0x0FFF)
 		//0x1NNN JP addr -> Jump to location nnn.
-		chip8.cpu.pc = int(b & 0x0FFF)
+		chip8.cpu.pc = b&0x0FFF - 2
 	case 0x2000:
 		fmt.Println("CALL addr")
 		//0x2NNN CALL addr -> Call subroutine at nnn.
-		chip8.cpu.memory[chip8.cpu.pc-1] = uint8(chip8.cpu.pc)
+		chip8.cpu.stack[chip8.cpu.sp] = chip8.cpu.pc
+		chip8.cpu.sp++
+		chip8.cpu.pc += 2
 	case 0x3000:
 		fmt.Println("SE Vx, byte")
 		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
@@ -181,7 +188,7 @@ func (cpu CPU) Interpreter(b uint16) {
 	case 0x8000:
 		switch b & 0x000F {
 		case 0x0000:
-			fmt.Println(" LD Vx, Vy")
+			fmt.Println("LD Vx, Vy")
 		case 0x0001:
 			fmt.Println("OR Vx, Vy")
 		case 0x0002:
@@ -191,24 +198,35 @@ func (cpu CPU) Interpreter(b uint16) {
 		case 0x0004:
 			fmt.Println("ADD Vx, Vy")
 		case 0x0005:
-			fmt.Println(" SUB Vx, Vy")
+			fmt.Println("SUB Vx, Vy")
 		case 0x0006:
 			fmt.Println("SHR Vx {, Vy}")
 		case 0x0007:
 			fmt.Println("SUBN Vx, Vy")
 		case 0x000E:
-			fmt.Println(" SHL Vx {, Vy}")
+			fmt.Println("SHL Vx {, Vy}")
 		}
 	case 0x9000:
 		fmt.Println("SNE Vx, Vy")
 	case 0xA000:
 		fmt.Println("LD I, addr")
 	case 0xB000:
-		fmt.Println(" JP V0, addr")
+		fmt.Println("JP V0, addr")
 	case 0xC000:
 		fmt.Println("RND Vx, byte")
 	case 0xD000:
-		fmt.Println(" DRW Vx, Vy, nibble")
+		fmt.Println("DRW Vx, Vy, nibble")
+		var tmps []uint8
+		for i := chip8.cpu.i; i < b&0x000F; i++ {
+			tmps = append(tmps, chip8.cpu.memory[i])
+		}
+		for i := uint8(0); i < uint8(len(tmps)); i++ {
+			for j := uint8(0); j < 8; j++ {
+				if tmps[i]&(0x80>>j) != 0 {
+					chip8.screen.mapscreen[chip8.cpu.v[(b&0x0F00)>>8]+i][chip8.cpu.v[(b&0x00F0)>>4]+j] ^= 1
+				}
+			}
+		}
 	case 0xE000:
 		switch b & 0x000F {
 		case 0x000E:
@@ -251,8 +269,10 @@ func Start() error {
 	}
 	ROM = file
 	Init()
+	chip8.screen.mapscreen = [64][32]uint8{}
 	LoadROM(file)
 	chip8.cpu.pc = 0x1FE
+	ebiten.SetTPS(60)
 	fmt.Println("Loading ROM...")
 	fmt.Println("ROM size: ", len(file))
 	fmt.Println("Chip8 Emulator")
