@@ -6,6 +6,7 @@ import (
 	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"log"
+	"math/rand"
 	"os"
 )
 
@@ -14,6 +15,8 @@ type CPU struct {
 	v      [16]uint8
 	pc     uint16
 	i      uint16
+	dt     uint8
+	st     uint8
 	sp     uint16
 	stack  [16]uint16
 }
@@ -138,129 +141,164 @@ func (cpu *CPU) Interpreter(b uint16) {
 		switch b & 0x000F {
 		case 0x0000:
 			//0x0000 CLS -> Clear the display.
-			fmt.Println("CLS")
 			for i := 0; i < resolWidth; i++ {
 				for j := 0; j < resolHeight; j++ {
 					chip8.screen.mapscreen[i][j] = 0
 				}
 			}
 		case 0x000E:
-			fmt.Println("RET")
 			//0x000E RET -> Return from a subroutine.
 			chip8.cpu.pc = StackPop()
 		}
 	case 0x1000:
-		fmt.Printf("JP addr = %x\n", b&0x0FFF)
 		//0x1NNN JP addr -> Jump to location nnn.
 		chip8.cpu.pc = b&0x0FFF - 2
 	case 0x2000:
-		fmt.Println("CALL addr")
 		//0x2NNN CALL addr -> Call subroutine at nnn.
 		StackPush(chip8.cpu.pc)
 		chip8.cpu.pc = b&0x0FFF - 2
 	case 0x3000:
-		fmt.Println("SE Vx, byte")
 		//0x3XNN SE Vx, byte -> Skip next instruction if Vx = kk.
 		if chip8.cpu.v[(b&0x0F00)>>8] == uint8(b&0x00FF) {
 			chip8.cpu.pc += 2
 		}
 	case 0x4000:
-		fmt.Println("SNE Vx, byte")
 		//0x4XNN SNE Vx, byte -> Skip next instruction if Vx != kk.
 		if chip8.cpu.v[(b&0x0F00)>>8] != uint8(b&0x00FF) {
 			chip8.cpu.pc += 2
 		}
 	case 0x5000:
-		fmt.Println(" SE Vx, Vy")
 		//0x5XY0 SE Vx, Vy -> Skip next instruction if Vx = Vy.
 		if chip8.cpu.v[(b&0x0F00)>>8] == chip8.cpu.v[(b&0x00F0)>>4] {
 			chip8.cpu.pc += 2
 		}
 	case 0x6000:
-		fmt.Println("LD Vx, byte")
 		//0x6XNN LD Vx, byte -> Set Vx = kk.
 		chip8.cpu.v[(b&0x0F00)>>8] = uint8(b & 0x00FF)
 	case 0x7000:
-		fmt.Println("ADD Vx, byte")
 		//0x7XNN ADD Vx, byte -> Set Vx = Vx + kk.
 		chip8.cpu.v[(b&0x0F00)>>8] += uint8(b & 0x00FF)
 	case 0x8000:
 		switch b & 0x000F {
 		case 0x0000:
-			fmt.Println("LD Vx, Vy")
+			//0x8XY0 LD Vx, Vy -> Set Vx = Vy.
+			chip8.cpu.v[(b&0x0F00)>>8] = chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0001:
-			fmt.Println("OR Vx, Vy")
+			//0x8XY1 OR Vx, Vy -> Set Vx = Vx OR Vy.
+			chip8.cpu.v[(b&0x0F00)>>8] |= chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0002:
-			fmt.Println("AND Vx, Vy")
+			//0x8XY2 AND Vx, Vy -> Set Vx = Vx AND Vy.
+			chip8.cpu.v[(b&0x0F00)>>8] &= chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0003:
-			fmt.Println("XOR Vx, Vy")
+			//0x8XY3 XOR Vx, Vy -> Set Vx = Vx XOR Vy.
+			chip8.cpu.v[(b&0x0F00)>>8] ^= chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0004:
-			fmt.Println("ADD Vx, Vy")
+			//0x8XY4 ADD Vx, Vy -> Set Vx = Vx + Vy, set VF = carry.
+			if chip8.cpu.v[(b&0x00F0)>>4] > (0xFF - chip8.cpu.v[(b&0x0F00)>>8]) {
+				chip8.cpu.v[0xF] = 1
+			} else {
+				chip8.cpu.v[0xF] = 0
+			}
+			chip8.cpu.v[(b&0x0F00)>>8] += chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0005:
-			fmt.Println("SUB Vx, Vy")
+			//0x8XY5 SUB Vx, Vy -> Set Vx = Vx - Vy, set VF = NOT borrow.
+			if chip8.cpu.v[(b&0x00F0)>>4] > chip8.cpu.v[(b&0x0F00)>>8] {
+				chip8.cpu.v[0xF] = 0
+			} else {
+				chip8.cpu.v[0xF] = 1
+			}
+			chip8.cpu.v[(b&0x0F00)>>8] -= chip8.cpu.v[(b&0x00F0)>>4]
 		case 0x0006:
-			fmt.Println("SHR Vx {, Vy}")
+			//0x8XY6 SHR Vx {, Vy} -> Set Vx = Vx SHR 1.
+			chip8.cpu.v[0xF] = chip8.cpu.v[(b&0x0F00)>>8] & 0x1
+			chip8.cpu.v[(b&0x0F00)>>8] >>= 1
 		case 0x0007:
-			fmt.Println("SUBN Vx, Vy")
+			//0x8XY7 SUBN Vx, Vy -> Set Vx = Vy - Vx, set VF = NOT borrow.
+			if chip8.cpu.v[(b&0x0F00)>>8] > chip8.cpu.v[(b&0x00F0)>>4] {
+				chip8.cpu.v[0xF] = 0
+			} else {
+				chip8.cpu.v[0xF] = 1
+			}
+			chip8.cpu.v[(b&0x0F00)>>8] = chip8.cpu.v[(b&0x00F0)>>4] - chip8.cpu.v[(b&0x0F00)>>8]
 		case 0x000E:
-			fmt.Println("SHL Vx {, Vy}")
+			//0x8XYE SHL Vx {, Vy} -> Set Vx = Vx SHL 1.
+			chip8.cpu.v[0xF] = chip8.cpu.v[(b&0x0F00)>>8] >> 7
+			chip8.cpu.v[(b&0x0F00)>>8] <<= 1
 		}
 	case 0x9000:
-		fmt.Println("SNE Vx, Vy")
+		//0x9XY0 SNE Vx, Vy -> Skip next instruction if Vx != Vy.
+		if chip8.cpu.v[(b&0x0F00)>>8] != chip8.cpu.v[(b&0x00F0)>>4] {
+			chip8.cpu.pc += 2
+		}
 	case 0xA000:
-		fmt.Println("LD I, addr")
 		//0xANNN LD I, addr -> Set I = nnn.
 		chip8.cpu.i = b & 0x0FFF
 	case 0xB000:
-		fmt.Println("JP V0, addr")
+		//0xBNNN JP V0, addr -> Jump to location nnn + V0.
+		chip8.cpu.pc = (b & 0x0FFF) + uint16(chip8.cpu.v[0])
 	case 0xC000:
-		fmt.Println("RND Vx, byte")
+		//0xCXNN RND Vx, byte -> Set Vx = random byte AND nn.
+		chip8.cpu.v[(b&0x0F00)>>8] = uint8(rand.Intn(255)) & uint8(b&0x00FF)
 	case 0xD000:
-		fmt.Println("DRW Vx, Vy, nibble")
+		//0xDXYK
 		var tmps []uint8
-		//1 - lire le sprit
-		//2 - comparer le sprit et le screen -> XOR
 		for i := chip8.cpu.i; i < chip8.cpu.i+b&0x000F; i++ {
 			tmps = append(tmps, chip8.cpu.memory[i])
 		}
-		fmt.Println(tmps)
 		for i := uint8(0); i < uint8(len(tmps)); i++ {
 			for j := uint8(0); j < 8; j++ {
-				chip8.screen.mapscreen[chip8.cpu.v[(b&0x0F00)>>8]+j][chip8.cpu.v[(b&0x00F0)>>4]+i] ^= tmps[i] >> (7 - j) & 0x01
+				chip8.screen.mapscreen[(chip8.cpu.v[(b&0x0F00)>>8]+j)%64][(chip8.cpu.v[(b&0x00F0)>>4]+i)%32] ^= tmps[i] >> (7 - j) & 0x01
 			}
 		}
 	case 0xE000:
 		switch b & 0x000F {
 		case 0x000E:
 			fmt.Println("SKP Vx")
+			if chip8.clavier.Key[chip8.cpu.v[(b&0x0F00)>>8]] == "1" {
+				chip8.cpu.pc += 2
+			}
 		case 0x0001:
 			fmt.Println("SKNP Vx")
 		}
 	case 0xF000:
 		switch b & 0x000F {
 		case 0x0007:
-			fmt.Println("Fx07 - LD Vx, DT")
+			//0xFX07 LD Vx, DT -> Set Vx = delay timer value.
+			chip8.cpu.v[(b&0x0F00)>>8] = chip8.cpu.dt
 		case 0x000A:
-			fmt.Println("LD Vx, K")
+			//0xFX0A LD Vx, K -> Wait for a key press, store the value of the key in Vx.
+			chip8.cpu.v[(b&0x0F00)>>8] = chip8.cpu.dt
 		case 0x0005:
 			switch b & 0x00F0 {
 			case 0x0010:
-				fmt.Println("LD DT, Vx")
+				//0xFX15 LD DT, Vx -> Set delay timer = Vx.
+				chip8.cpu.dt = chip8.cpu.v[(b&0x0F00)>>8]
 			case 0x0050:
-				fmt.Println("LD [I], Vx")
+				//0xFX55 LD [I], Vx -> Store registers V0 through Vx in memory starting at location I.
+				for i := uint16(0); i <= (b&0x0F00)>>8; i++ {
+					chip8.cpu.memory[chip8.cpu.i+i] = chip8.cpu.v[i]
+				}
 			case 0x0060:
-				fmt.Println("LD Vx, [I]")
+				//0xFX65 LD Vx, [I] -> Read registers V0 through Vx from memory starting at location I.
+				for i := uint16(0); i <= (b&0x0F00)>>8; i++ {
+					chip8.cpu.v[i] = chip8.cpu.memory[chip8.cpu.i+i]
+				}
 			}
 		case 0x0008:
-			fmt.Println("LD ST, Vx")
+			//0xFX18 LD ST, Vx -> Set sound timer = Vx.
+			chip8.cpu.st = chip8.cpu.v[(b&0x0F00)>>8]
 		case 0x000E:
-			fmt.Println("ADD I, Vx")
+			//0xFX1E ADD I, Vx -> Set I = I + Vx.
+			chip8.cpu.i += uint16(chip8.cpu.v[(b&0x0F00)>>8])
 		case 0x0009:
-			fmt.Println("LD F, Vx")
+			//0xFX29 LD F, Vx -> Set I = location of sprite for digit Vx.
+			chip8.cpu.i = uint16(chip8.cpu.v[(b&0x0F00)>>8] * 5)
 		case 0x0003:
-			fmt.Println("LD B, Vx")
+			//0xFX33 LD B, Vx -> Store BCD representation of Vx in memory locations I, I+1, and I+2.
+			chip8.cpu.memory[chip8.cpu.i] = chip8.cpu.v[(b&0x0F00)>>8] / 100
+			chip8.cpu.memory[chip8.cpu.i+1] = (chip8.cpu.v[(b&0x0F00)>>8] / 10) % 10
+			chip8.cpu.memory[chip8.cpu.i+2] = (chip8.cpu.v[(b&0x0F00)>>8] % 100) % 10
 		}
-
 	}
 }
 
@@ -290,14 +328,6 @@ func main() {
 		fmt.Println("ERROR system start")
 		return
 	}
-}
-
-func unit16to8(a uint16) (uint8, uint8) {
-	return uint8(a >> 8), uint8(a & 0x00FF)
-}
-
-func unit8to4(a uint8) (uint8, uint8) {
-	return uint8(a >> 4), uint8(a & 0x0F)
 }
 
 func StackPush(pc uint16) {
