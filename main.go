@@ -28,7 +28,7 @@ type Chip8 struct {
 }
 
 type Clavier struct {
-	FontSet []byte
+	isPressed [16]bool
 }
 
 type Screen struct {
@@ -57,31 +57,29 @@ type Console struct {
 	command string
 }
 
-func EventKeyBoard() {
-	var key = map[ebiten.Key]int{
-		ebiten.Key1: 0,
-		ebiten.Key2: 1,
-		ebiten.Key3: 2,
-		ebiten.Key4: 3,
-		ebiten.KeyA: 4,
-		ebiten.KeyB: 5,
-		ebiten.KeyC: 6,
-		ebiten.KeyD: 7,
-		ebiten.KeyE: 8,
-		ebiten.KeyF: 9,
-	}
-	for k, v := range key {
-		if ebiten.IsKeyPressed(k) {
-			chip8.clavier.FontSet[v] += 0x01
-			fmt.Println(k)
-		} else {
-			chip8.clavier.FontSet[v] -= 0x01
-		}
+func RefreshKeyBoard() {
+	chip8.clavier.isPressed = [16]bool{
+		ebiten.IsKeyPressed(ebiten.Key1),
+		ebiten.IsKeyPressed(ebiten.Key2),
+		ebiten.IsKeyPressed(ebiten.Key3),
+		ebiten.IsKeyPressed(ebiten.Key4),
+		ebiten.IsKeyPressed(ebiten.KeyA),
+		ebiten.IsKeyPressed(ebiten.KeyZ),
+		ebiten.IsKeyPressed(ebiten.KeyE),
+		ebiten.IsKeyPressed(ebiten.KeyR),
+		ebiten.IsKeyPressed(ebiten.KeyQ),
+		ebiten.IsKeyPressed(ebiten.KeyS),
+		ebiten.IsKeyPressed(ebiten.KeyD),
+		ebiten.IsKeyPressed(ebiten.KeyF),
+		ebiten.IsKeyPressed(ebiten.KeyW),
+		ebiten.IsKeyPressed(ebiten.KeyX),
+		ebiten.IsKeyPressed(ebiten.KeyC),
+		ebiten.IsKeyPressed(ebiten.KeyV),
 	}
 }
 
 func Init() {
-	chip8.clavier.FontSet = []byte{
+	var fontSet = []byte{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 		0x20, 0x60, 0x20, 0x20, 0x70, // 1
 		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -99,9 +97,16 @@ func Init() {
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 	}
-	for i := 0; i < len(chip8.clavier.FontSet); i++ {
-		chip8.cpu.memory[i] = chip8.clavier.FontSet[i]
+	for i := 0; i < len(fontSet); i++ {
+		chip8.cpu.memory[i] = fontSet[i]
 	}
+	for i := 0; i < len(chip8.clavier.isPressed); i++ {
+		chip8.clavier.isPressed[i] = false
+	}
+}
+
+func (kb *Clavier) GetKey(key byte) bool {
+	return kb.isPressed[key]
 }
 
 // NewConsole initialise un nouveau jeu.
@@ -114,7 +119,7 @@ func (g *Console) Update() error {
 	chip8.cpu.pc += 2
 	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
 	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
-	EventKeyBoard()
+	RefreshKeyBoard()
 	return nil
 }
 
@@ -277,15 +282,16 @@ func (cpu *CPU) Interpreter(b uint16) {
 	case 0xE000:
 		switch b & 0x000F {
 		case 0x000E:
-			fmt.Println("SKP Vx")
+			fmt.Println("\nSKNP Vx ----------------------------------------------------------------------------- Not Pressed")
 			//0xEX9E SKP Vx -> Skip next instruction if key with the value of Vx is pressed.
-			if chip8.clavier.FontSet[chip8.cpu.v[(b&0x0F00)>>8]] == 0x01 {
+			if chip8.clavier.isPressed[chip8.cpu.v[(b&0x0F00)>>8]] {
+				fmt.Println("\nSKP Vx ----------------------------------------------------------------------------- Pressed")
 				chip8.cpu.pc += 2
 			}
 		case 0x0001:
-			fmt.Println("SKNP Vx")
+
 			//0xEXA1 SKNP Vx -> Skip next instruction if key with the value of Vx is not pressed.
-			if chip8.clavier.FontSet[chip8.cpu.v[(b&0x0F00)>>8]] == 0x00 {
+			if !chip8.clavier.isPressed[chip8.cpu.v[(b&0x0F00)>>8]] {
 				chip8.cpu.pc += 2
 			}
 		}
@@ -339,7 +345,7 @@ func Start() error {
 	ROM = file
 	Init()
 	fmt.Println("Init...")
-	fmt.Println(chip8.clavier.FontSet)
+	//fmt.Println(chip8.clavier.Keyboard)
 	chip8.screen.mapscreen = [64][32]uint8{}
 	LoadROM(file)
 	chip8.cpu.pc = 0x1FE
