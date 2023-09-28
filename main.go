@@ -259,6 +259,9 @@ func (cpu *CPU) Interpreter(b uint16) {
 			}
 		case 0x0001:
 			fmt.Println("SKNP Vx")
+			if chip8.clavier.Key[chip8.cpu.v[(b&0x0F00)>>8]] == "0" {
+				chip8.cpu.pc += 2
+			}
 		}
 	case 0xF000:
 		switch b & 0x000F {
