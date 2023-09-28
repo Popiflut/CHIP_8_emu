@@ -209,6 +209,8 @@ func (cpu *CPU) Interpreter(b uint16) {
 		fmt.Println("SNE Vx, Vy")
 	case 0xA000:
 		fmt.Println("LD I, addr")
+		//0xANNN LD I, addr -> Set I = nnn.
+		chip8.cpu.i = b & 0x0FFF
 	case 0xB000:
 		fmt.Println("JP V0, addr")
 	case 0xC000:
@@ -216,14 +218,15 @@ func (cpu *CPU) Interpreter(b uint16) {
 	case 0xD000:
 		fmt.Println("DRW Vx, Vy, nibble")
 		var tmps []uint8
-		for i := chip8.cpu.i; i < b&0x000F; i++ {
+		//1 - lire le sprit
+		//2 - comparer le sprit et le screen -> XOR
+		for i := chip8.cpu.i; i < chip8.cpu.i+b&0x000F; i++ {
 			tmps = append(tmps, chip8.cpu.memory[i])
 		}
+		fmt.Println(tmps)
 		for i := uint8(0); i < uint8(len(tmps)); i++ {
 			for j := uint8(0); j < 8; j++ {
-				if tmps[i]&(0x80>>j) != 0 {
-					chip8.screen.mapscreen[chip8.cpu.v[(b&0x0F00)>>8]+i][chip8.cpu.v[(b&0x00F0)>>4]+j] ^= 1
-				}
+				chip8.screen.mapscreen[chip8.cpu.v[(b&0x0F00)>>8]+j][chip8.cpu.v[(b&0x00F0)>>4]+i] ^= tmps[i] >> (7 - j) & 0x01
 			}
 		}
 	case 0xE000:
