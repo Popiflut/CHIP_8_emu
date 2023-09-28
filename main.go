@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"log"
 	"os"
@@ -94,7 +95,7 @@ func (g *Console) Update() error {
 func (g *Console) Draw(screen *ebiten.Image) {
 	for x := 0; x < len(chip8.screen.s); x++ {
 		for y := 0; y < len(chip8.screen.s[x]); y++ {
-			//ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
+			ebitenutil.DrawRect(screen, float64(x*(screenWidth/64)), float64(y*(screenHeight/32)), float64((x+1)*(screenWidth/64)), float64((y+1)*(screenHeight/32)), chip8.screen.s[x][y])
 		}
 	}
 }
