@@ -1,5 +1,6 @@
 package VAR
 
+// Interpreter is the function that interprets the opcodes
 func (cpu *CPUs) Interpreter(b uint16) {
 	switch b & 0xF000 {
 	case 0x0000:

@@ -5,7 +5,7 @@ import (
 	"main/emu/VAR"
 )
 
-
+//RefreshKeyBoard -> Refresh the keyboard
 func RefreshKeyBoard() {
 	VAR.CHIP8.Clavier.IsPressed = [16]bool{
 		ebiten.IsKeyPressed(ebiten.Key1),
@@ -26,5 +26,3 @@ func RefreshKeyBoard() {
 		ebiten.IsKeyPressed(ebiten.KeyV),
 	}
 }
-
-
