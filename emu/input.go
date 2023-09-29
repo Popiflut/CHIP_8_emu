@@ -1,13 +1,13 @@
 package emu
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"github.com/hajimehoshi/ebiten/v2"
+	"main/emu/VAR"
+)
 
-type Clavier struct {
-	isPressed [16]bool
-}
 
 func RefreshKeyBoard() {
-	CHIP8.clavier.isPressed = [16]bool{
+	VAR.CHIP8.Clavier.IsPressed = [16]bool{
 		ebiten.IsKeyPressed(ebiten.Key1),
 		ebiten.IsKeyPressed(ebiten.Key2),
 		ebiten.IsKeyPressed(ebiten.Key3),
@@ -27,6 +27,4 @@ func RefreshKeyBoard() {
 	}
 }
 
-func (kb *Clavier) GetKey(key byte) bool {
-	return kb.isPressed[key]
-}
+
