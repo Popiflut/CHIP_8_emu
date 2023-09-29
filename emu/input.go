@@ -7,7 +7,7 @@ type Clavier struct {
 }
 
 func RefreshKeyBoard() {
-	chip8.clavier.isPressed = [16]bool{
+	CHIP8.clavier.isPressed = [16]bool{
 		ebiten.IsKeyPressed(ebiten.Key1),
 		ebiten.IsKeyPressed(ebiten.Key2),
 		ebiten.IsKeyPressed(ebiten.Key3),

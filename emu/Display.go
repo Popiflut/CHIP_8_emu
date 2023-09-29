@@ -8,7 +8,7 @@ import (
 )
 
 type Screen struct {
-	mapscreen [64][32]uint8
+	Mapscreen [64][32]uint8
 }
 
 type Console struct {
@@ -18,10 +18,10 @@ type Console struct {
 }
 
 const (
-	screenWidth  = 640
+	ScreenWidth  = 640
 	screenHeight = 320
-	resolWidth   = 64
-	resolHeight  = 32
+	ResolWidth   = 64
+	ResolHeight  = 32
 )
 
 func Init() {
@@ -44,10 +44,10 @@ func Init() {
 		0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 	}
 	for i := 0; i < len(fontSet); i++ {
-		chip8.cpu.memory[i] = fontSet[i]
+		CHIP8.Cpu.memory[i] = fontSet[i]
 	}
-	for i := 0; i < len(chip8.clavier.isPressed); i++ {
-		chip8.clavier.isPressed[i] = false
+	for i := 0; i < len(CHIP8.clavier.isPressed); i++ {
+		CHIP8.clavier.isPressed[i] = false
 	}
 }
 
@@ -58,34 +58,33 @@ func NewConsole() *Console {
 }
 
 func (g *Console) Update() error {
-	chip8.cpu.pc += 2
-	fmt.Printf("cp = %02X:0x%04X: ", chip8.cpu.pc, (uint16(chip8.cpu.memory[chip8.cpu.pc])<<8)|uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
-	chip8.cpu.Interpreter((uint16(chip8.cpu.memory[chip8.cpu.pc]) << 8) | uint16(chip8.cpu.memory[chip8.cpu.pc+1]))
+	CHIP8.Cpu.Pc += 2
+	fmt.Printf("cp = %02X:0x%04X: ", CHIP8.Cpu.Pc, (uint16(CHIP8.Cpu.memory[CHIP8.Cpu.Pc])<<8)|uint16(CHIP8.Cpu.memory[CHIP8.Cpu.Pc+1]))
+	CHIP8.Cpu.Interpreter((uint16(CHIP8.Cpu.memory[CHIP8.Cpu.Pc]) << 8) | uint16(CHIP8.Cpu.memory[CHIP8.Cpu.Pc+1]))
 	RefreshKeyBoard()
 	return nil
 }
 
 func (g *Console) Draw(screen *ebiten.Image) {
-	for x, row := range chip8.screen.mapscreen {
+	for x, row := range CHIP8.Screen.Mapscreen {
 		for y, pixel := range row {
-			var c color.Color
 			if pixel == 1 {
-				c = color.White
+				screen.Set(x, y, color.White)
 			} else {
-				c = color.Black
+				screen.Set(x, y, color.Black)
 			}
-			screen.Set(x, y, c)
+
 		}
 	}
 }
 
 func (g *Console) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return resolWidth, resolHeight
+	return ResolWidth, ResolHeight
 }
 
 func LoadProgram() {
 	//s = new
-	ebiten.SetWindowSize(screenWidth, screenHeight)
+	ebiten.SetWindowSize(ScreenWidth, screenHeight)
 	ebiten.SetWindowTitle("CHIP-8 Console")
 	console := NewConsole()
 	ebiten.SetTPS(60)
