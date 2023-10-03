@@ -12,7 +12,7 @@ func ADD_Vx_Vy(b uint16) {
 	y, _ := Utils.Uint8ToUint4(lower)
 
 	CHIP8.Cpu.V[x] += CHIP8.Cpu.V[y]
-	if CHIP8.Cpu.V[y] > 255 || CHIP8.Cpu.V[x] != 255 {
+	if CHIP8.Cpu.V[x] >= 0xFF {
 		CHIP8.Cpu.V[0xF] = 1
 	} else {
 		CHIP8.Cpu.V[0xF] = 0
