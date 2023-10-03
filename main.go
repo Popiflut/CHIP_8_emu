@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"main/emu"
 )
 

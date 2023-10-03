@@ -29,21 +29,21 @@ func (cpu *CPUs) Interpreter(b uint16) {
 		case 0x0000:
 			LD_Vx_Vy(b)
 		case 0x0001:
-			OR_Vx_Vy(b)
+			OR_Vx_Vy(b) //Happy 1
 		case 0x0002:
-			AND_Vx_Vy(b)
+			AND_Vx_Vy(b) //Happy 2
 		case 0x0003:
-			XOR_Vx_Vy(b)
+			XOR_Vx_Vy(b) //Happy 3
 		case 0x0004:
-			ADD_Vx_Vy(b)
+			ADD_Vx_Vy(b) //Happy 4 - Carry 4
 		case 0x0005:
-			SUB_Vx_Vy(b)
+			SUB_Vx_Vy(b) //Happy 5 - Carry 5
 		case 0x0006:
-			SHR_Vx_Vy(b)
+			SHR_Vx_Vy(b) //Happy 6 - Carry 6
 		case 0x0007:
-			SUBN_Vx_Vy(b)
+			SUBN_Vx_Vy(b) //Happy 7 - Carry 7
 		case 0x000E:
-			SHL_Vx_Vy(b)
+			SHL_Vx_Vy(b) //Happy E - Carry E
 		}
 	case 0x9000:
 		SNE_Vx_Vy(b)
