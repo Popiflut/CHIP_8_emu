@@ -1,7 +1,6 @@
 package emu
 
 import (
-	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 	"log"
@@ -53,7 +52,6 @@ func NewConsole() *Consoles {
 // Update update the emulator.
 func (g *Consoles) Update() error {
 	VAR.CHIP8.Cpu.Pc += 2
-	fmt.Printf("cp = %02X:0x%04X: ", VAR.CHIP8.Cpu.Pc, (uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc])<<8)|uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc+1]))
 	VAR.CHIP8.Cpu.Interpreter((uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc]) << 8) | uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc+1]))
 	RefreshKeyBoard()
 	return nil
