@@ -29,6 +29,7 @@ func Start() error {
 	//fmt.Println(VAR.clavier.Keyboard)
 	VAR.CHIP8.Screen.Mapscreen = [64][32]uint8{}
 	LoadROM(file)
+	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
 	ebiten.SetTPS(60)
 	fmt.Println("Loading ROM...")
