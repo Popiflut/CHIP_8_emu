@@ -7,7 +7,7 @@ import (
 	"main/emu/VAR"
 )
 
-// Init initialise the font set and the keyboard
+// Init initialise le font set et le keyboard
 func Init() {
 	var fontSet = []byte{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -49,7 +49,7 @@ func NewConsole() *Consoles {
 	return console
 }
 
-// Update update the emulator.
+// Update update l'emulator.
 func (g *Consoles) Update() error {
 	if VAR.CHIP8.Cpu.Dt > 0 {
 		VAR.CHIP8.Cpu.Dt--
@@ -60,7 +60,7 @@ func (g *Consoles) Update() error {
 	return nil
 }
 
-// Draw print the pixels on the screen.
+// Draw print les pixels sur l'ecran.
 func (g *Consoles) Draw(screen *ebiten.Image) {
 	for x, row := range VAR.CHIP8.Screen.Mapscreen {
 		for y, pixel := range row {
@@ -73,7 +73,7 @@ func (g *Consoles) Draw(screen *ebiten.Image) {
 	}
 }
 
-// Layout is the layout of the screen.
+// Layout est le layout de l'ecran.
 func (g *Consoles) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return VAR.ResolWidth, VAR.ResolHeight
 }
