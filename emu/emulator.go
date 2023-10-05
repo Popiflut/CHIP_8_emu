@@ -31,7 +31,7 @@ func Start() error {
 	LoadROM(file)
 	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
-	ebiten.SetTPS(60)
+	ebiten.SetTPS(800)
 	fmt.Println("Loading ROM...")
 	fmt.Println("ROM size: ", len(file))
 	fmt.Println("Chip8 Emulator")

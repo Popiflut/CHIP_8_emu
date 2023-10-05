@@ -5,12 +5,13 @@ package VAR
 // value of that key is stored in Vx.
 func LD_Vx_K(b uint16) {
 	var key bool
-	for !key {
-		for i, _ := range CHIP8.Clavier.IsPressed {
-			if CHIP8.Clavier.IsPressed[i] {
-				key = true
-				CHIP8.Cpu.V[b&0x0F00>>8] = uint8(i)
-			}
+	for i, _ := range CHIP8.Clavier.IsPressed {
+		if CHIP8.Clavier.IsPressed[i] {
+			key = true
+			CHIP8.Cpu.V[b&0x0F00>>8] = uint8(i)
 		}
+	}
+	if !key {
+		CHIP8.Cpu.Pc -= 2
 	}
 }

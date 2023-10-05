@@ -84,7 +84,6 @@ func LoadProgram() {
 	ebiten.SetWindowSize(VAR.ScreenWidth, VAR.ScreenHeight)
 	ebiten.SetWindowTitle("CHIP-8 Console")
 	console := NewConsole()
-	ebiten.SetTPS(60)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(console); err != nil {
 		log.Fatal(err)

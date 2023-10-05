@@ -6,4 +6,5 @@ package VAR
 // in the result is also 1. Otherwise, it is 0.
 func AND_Vx_Vy(b uint16) {
 	CHIP8.Cpu.V[(b&0x0F00)>>8] &= CHIP8.Cpu.V[(b&0x00F0)>>4]
+	CHIP8.Cpu.V[0xF] = 0
 }
