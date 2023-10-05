@@ -2,9 +2,10 @@ package emu
 
 import (
 	"fmt"
-	"github.com/hajimehoshi/ebiten/v2"
 	"main/emu/VAR"
 	"os"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // LoadROM -> charge le ROM dans la memoire
@@ -31,7 +32,7 @@ func Start() error {
 	LoadROM(file)
 	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
-	ebiten.SetTPS(600)
+	ebiten.SetTPS(60)
 	fmt.Println("Loading ROM...")
 	fmt.Println("ROM size: ", len(file))
 	fmt.Println("Chip8 Emulator")
