@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// LoadROM -> Load the ROM in memory
+// LoadROM -> charge le ROM dans la memoire
 func LoadROM(file []byte) {
 	VAR.CHIP8.Cpu.Memory = [4096]byte{}
 	n := 0x200
@@ -17,7 +17,7 @@ func LoadROM(file []byte) {
 	}
 }
 
-// Start -> Start the emulator
+// Start -> lance l'emulator
 func Start() error {
 	file, err := os.ReadFile(os.Args[1])
 	if err != nil {
