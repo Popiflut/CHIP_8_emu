@@ -7,6 +7,7 @@ import (
 	"main/emu/VAR"
 	"os"
 	"strings"
+	"time"
 )
 
 // LoadROM -> charge le ROM dans la memoire
@@ -34,25 +35,31 @@ func Start() error {
 	LoadROM(file)
 	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
-	fmt.Println("Loading ROM...")
-	fmt.Println("ROM size: ", len(file))
-	fmt.Println("Chip8 Emulator")
-	fmt.Println("ROM: ", os.Args[1])
-	fmt.Println("Start")
+	fmt.Println("-ROM: ", "-Name: ", os.Args[1], "-Size: ", len(file))
+	VAR.CHIP8.Cpu.AudioPlayer = NewAPlayer()
 	LoadProgram()
 	return nil
 }
 
 func checkArgs() {
-	if len(os.Args) > 3 {
+	ebiten.SetTPS(60)
+	VAR.CHIP8.Screen.TPS = 8
+	if len(os.Args) > 4 {
 		fmt.Println("Usage: ./chip8 <ROM> [params]")
 		os.Exit(0)
-	} else if len(os.Args) == 3 {
-		ebiten.SetTPS(60)
+	} else if len(os.Args) > 2 {
+		print("-Params: ")
 		for i := 2; i < len(os.Args); i++ {
-			if strings.Contains(os.Args[i], "-TPS=") {
-				ebiten.SetTPS(Utils.AtoI(os.Args[i][5:]))
+			if strings.Contains(os.Args[i], "-CPU_HZ=") {
+				ebiten.SetTPS(Utils.AtoI(os.Args[i][8:]))
+
+				fmt.Print(" --Set_CPU_Hz: ", Utils.AtoI(os.Args[i][8:]), "Hz")
+			} else if strings.Contains(os.Args[i], "-TPS=") {
+				VAR.CHIP8.Screen.TPS = time.Duration(Utils.AtoI(os.Args[i][5:]))
+
+				fmt.Print(" --Set_TPS: ", Utils.AtoI(os.Args[i][5:]), "fps")
 			}
 		}
+		fmt.Println()
 	}
 }

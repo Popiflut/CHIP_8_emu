@@ -5,7 +5,6 @@ package VAR
 // increments the program counter by 2.
 func SE_Vx_byte(b uint16) {
 	if CHIP8.Cpu.V[(b&0x0F00)>>8] == uint8(b&0x00FF) {
-		//fmt.Printf("\n SE V%X == %02X\n", (b&0x0F00)>>8, b&0x00FF)
 		CHIP8.Cpu.Pc += 2
 	}
 }

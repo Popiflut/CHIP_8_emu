@@ -1,6 +1,7 @@
 package VAR
 
 import (
+	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/v2"
 	"time"
 )
@@ -23,21 +24,24 @@ type Claviers struct {
 // It contains the state of the screen
 type Screens struct {
 	Mapscreen [64][32]uint8
+	TPS       time.Duration
 }
 
 // CPUs is the CPU struct
 // It contains the state of the CPU
 // It contains the memory, the registers, the program counter, the index register, the delay timer, the sound timer, the stack pointer and the stack
 type CPUs struct {
-	Memory    [4096]byte
-	V         [16]uint8
-	Pc        uint16
-	I         uint16
-	Dt        uint8
-	TimeStart time.Time
-	St        uint8
-	Sp        uint16
-	Stack     [16]uint16
+	Memory      [4096]byte
+	V           [16]uint8
+	Pc          uint16
+	I           uint16
+	Dt          uint8
+	TimeStart   time.Time
+	St          uint8
+	Sp          uint16
+	Stack       [16]uint16
+	SoundTimer  uint8
+	AudioPlayer *audio.Player
 }
 
 const (
