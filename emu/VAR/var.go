@@ -1,8 +1,8 @@
 package VAR
 
 import (
-	"github.com/hajimehoshi/ebiten/audio"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"time"
 )
 
@@ -31,17 +31,16 @@ type Screens struct {
 // It contains the state of the CPU
 // It contains the memory, the registers, the program counter, the index register, the delay timer, the sound timer, the stack pointer and the stack
 type CPUs struct {
-	Memory      [4096]byte
-	V           [16]uint8
-	Pc          uint16
-	I           uint16
-	Dt          uint8
-	TimeStart   time.Time
-	St          uint8
-	Sp          uint16
-	Stack       [16]uint16
-	SoundTimer  uint8
-	AudioPlayer *audio.Player
+	Memory     [4096]byte
+	V          [16]uint8
+	Pc         uint16
+	I          uint16
+	Dt         uint8
+	TimeStart  time.Time
+	St         uint8
+	Sp         uint16
+	Stack      [16]uint16
+	SoundTimer uint8
 }
 
 const (
@@ -61,7 +60,11 @@ var (
 	// ROM is the file containing the game
 	ROM []byte
 	// screen is the image for ebiten
-	screen *ebiten.Image
+	screen          *ebiten.Image
+	Freq            = 440
+	DurationSeconds = 1
+	Player          *audio.Player
+	Context         *audio.Context
 )
 
 // GetKey returns the state of the key

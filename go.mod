@@ -5,6 +5,7 @@ go 1.19
 require github.com/hajimehoshi/ebiten v1.12.12
 
 require (
+	github.com/ebitengine/oto/v3 v3.1.0 // indirect
 	github.com/ebitengine/purego v0.5.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200707082815-5321531c36a2 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.6.0 // indirect

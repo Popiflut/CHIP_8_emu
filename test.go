@@ -1,31 +1,40 @@
-package emu
+package main
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"io"
-	"main/emu/VAR"
 	"math"
 	"time"
 )
 
-func MakeSound() {
-	// Create a Player with a sinusoidal wave as the source
-	err := error(nil)
-	VAR.Player, err = VAR.Context.NewPlayer(sineWave(float64(VAR.Freq), VAR.DurationSeconds)) // 440 Hz sine wave for 1 second
+func main() {
+	// Initialize the audio context
+	context := audio.NewContext(44100)
+
+	// Create a player with a sinusoidal wave as the source
+	player, err := context.NewPlayer(sineWave(440, 1)) // 440 Hz sine wave for 1 second
 	if err != nil {
-		fmt.Println("Error creating Player:", err)
+		fmt.Println("Error creating player:", err)
 		return
 	}
 
 	// Play the sound
-	VAR.Player.Play()
+	fmt.Printf("\n", player)
+	player.Play()
 
-	time.Sleep(time.Millisecond)
+	//wait
+	time.Sleep(time.Second * 1)
+	fmt.Printf("\n", player)
+
+	player.Pause()
+
 	// Close the context when the function returns
-	VAR.Player.Close()
+	player.Close()
 }
 
+// sineWave generates a sinusoidal wave with the given frequency and duration
 func sineWave(freq float64, durationSeconds int) io.Reader {
 	const sampleRate = 44100
 	numSamples := sampleRate * durationSeconds
@@ -38,6 +47,7 @@ func sineWave(freq float64, durationSeconds int) io.Reader {
 	return bytes.NewReader(int16SliceToBytes(samples))
 }
 
+// int16SliceToBytes converts a slice of int16 to a byte slice
 func int16SliceToBytes(samples []int) []byte {
 	byteSlice := make([]byte, len(samples)*2)
 	for i, sample := range samples {

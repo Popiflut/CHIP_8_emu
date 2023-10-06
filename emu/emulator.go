@@ -3,6 +3,7 @@ package emu
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"main/emu/Utils"
 	"main/emu/VAR"
 	"os"
@@ -36,7 +37,7 @@ func Start() error {
 	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
 	fmt.Println("-ROM: ", "-Name: ", os.Args[1], "-Size: ", len(file))
-	VAR.CHIP8.Cpu.AudioPlayer = NewAPlayer()
+	VAR.Context = audio.NewContext(44100)
 	LoadProgram()
 	return nil
 }
