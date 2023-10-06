@@ -3,8 +3,10 @@ package emu
 import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
+	"main/emu/Utils"
 	"main/emu/VAR"
 	"os"
+	"strings"
 )
 
 // LoadROM -> charge le ROM dans la memoire
@@ -20,6 +22,7 @@ func LoadROM(file []byte) {
 // Start -> lance l'emulator
 func Start() error {
 	file, err := os.ReadFile(os.Args[1])
+	checkArgs()
 	if err != nil {
 		return err
 	}
@@ -31,7 +34,6 @@ func Start() error {
 	LoadROM(file)
 	VAR.CHIP8.Cpu.V = [16]uint8{}
 	VAR.CHIP8.Cpu.Pc = 0x1FE
-	ebiten.SetTPS(600)
 	fmt.Println("Loading ROM...")
 	fmt.Println("ROM size: ", len(file))
 	fmt.Println("Chip8 Emulator")
@@ -39,4 +41,18 @@ func Start() error {
 	fmt.Println("Start")
 	LoadProgram()
 	return nil
+}
+
+func checkArgs() {
+	if len(os.Args) > 3 {
+		fmt.Println("Usage: ./chip8 <ROM> [params]")
+		os.Exit(0)
+	} else if len(os.Args) == 3 {
+		ebiten.SetTPS(60)
+		for i := 2; i < len(os.Args); i++ {
+			if strings.Contains(os.Args[i], "-TPS=") {
+				ebiten.SetTPS(Utils.AtoI(os.Args[i][5:]))
+			}
+		}
+	}
 }

@@ -15,3 +15,14 @@ func Uint8ToUint4(a uint8) (uint8, uint8) {
 func Uint4ToUint8(a uint8, b uint8) uint8 {
 	return uint8(a)<<4 | uint8(b) //4 bits vers la gauche
 }
+
+func AtoI(a string) int {
+	var tmp int
+	for i := 0; i < len(a); i++ {
+		tmp += int(a[i]) - 48
+		if i != len(a)-1 {
+			tmp *= 10
+		}
+	}
+	return tmp
+}

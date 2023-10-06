@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"main/emu/VAR"
+	"time"
 )
 
 // Init initialise le font set et le keyboard
@@ -51,12 +52,18 @@ func NewConsole() *Consoles {
 
 // Update update l'emulator.
 func (g *Consoles) Update() error {
-	if VAR.CHIP8.Cpu.Dt > 0 {
-		VAR.CHIP8.Cpu.Dt--
+	if time.Now().Sub(VAR.CHIP8.Cpu.TimeStart) > time.Second/60 { // when one second has past
+		if VAR.CHIP8.Cpu.Dt > 0 {
+			VAR.CHIP8.Cpu.Dt -= 1
+		}
+		VAR.CHIP8.Cpu.Pc += 2
+		VAR.CHIP8.Cpu.Interpreter((uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc]) << 8) | uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc+1]))
+		RefreshKeyBoard()
+		VAR.CHIP8.Cpu.TimeStart = time.Now()
+		//if chip8.SoundTimer > 0 {
+		//	chip8.SoundTimer -= 1
+		//}
 	}
-	VAR.CHIP8.Cpu.Pc += 2
-	VAR.CHIP8.Cpu.Interpreter((uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc]) << 8) | uint16(VAR.CHIP8.Cpu.Memory[VAR.CHIP8.Cpu.Pc+1]))
-	RefreshKeyBoard()
 	return nil
 }
 
