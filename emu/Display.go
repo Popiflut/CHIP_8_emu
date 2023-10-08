@@ -56,6 +56,7 @@ func NewConsole() *Consoles {
 
 // Update update l'emulator.
 func (g *Consoles) Update() error {
+
 	if time.Now().Sub(VAR.CHIP8.Cpu.TimeStart) > time.Second/VAR.CHIP8.Screen.TPS { // when one second has past
 		//if time.Now().Sub(VAR.CHIP8.Cpu.TimeStart) > time.Second/8 {
 		if VAR.CHIP8.Cpu.Dt > 0 {

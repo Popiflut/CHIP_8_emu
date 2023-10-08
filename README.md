@@ -2,6 +2,14 @@
 emulator for chip 8
 Ce code est un programme en Go qui implémente un émulateur de la console de jeu CHIP-8. Je vais expliquer chaque partie du code en détail.
 
+Usage: ```go run main.go <rom_file> [params]```
+
+Parameters:
+
+* ```-TPS=```: set la clock (default: 8)
+
+* ```-CPU_HZ=```: set la fréquence de raffraichissement du cpu (default: 60)
+
 Tout d'abord, le code commence par importer plusieurs packages nécessaires :
 
 	"fmt"

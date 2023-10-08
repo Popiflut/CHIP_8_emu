@@ -148,9 +148,6 @@ func SUB_Vx_Vy(b uint16) {
 // Set Vx = Vx SHR 1. If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is
 // divided by 2.
 func SHR_Vx_Vy(b uint16) {
-	//x := (b & 0x0F00) >> 8
-	//CHIP8.Cpu.V[0xF] = CHIP8.Cpu.V[x] & 0x01
-	//CHIP8.Cpu.V[x] >>= 1
 	x := (b & 0x0F00) >> 8
 	y := (b & 0x00F0) >> 4
 
@@ -183,9 +180,6 @@ func SUBN_Vx_Vy(b uint16) {
 // Set Vx = Vx SHL 1. If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is
 // multiplied by 2.
 func SHL_Vx_Vy(b uint16) {
-	//x := (b & 0x0F00) >> 8
-	//CHIP8.Cpu.V[0xF] = CHIP8.Cpu.V[x] & 0x01
-	//CHIP8.Cpu.V[x] >>= 1
 	x := (b & 0x0F00) >> 8
 	y := (b & 0x00F0) >> 4
 
@@ -217,7 +211,7 @@ func LD_I_addr(b uint16) {
 // 0xBNNN JP V0, addr -> Jump to location nnn + V0.
 // Jump to location nnn + V0. The program counter is set to nnn plus the value of V0.
 func JP_V0_addr(b uint16) {
-	CHIP8.Cpu.Pc = (b & 0x0FFF) + uint16(CHIP8.Cpu.V[b&0x000F>>8])
+	CHIP8.Cpu.Pc = (b & 0x0FFF) + uint16(CHIP8.Cpu.V[0])
 }
 
 // 0xCXNN RND Vx, byte -> Set Vx = random byte AND nn.
@@ -308,6 +302,8 @@ func LD_Vx_K(b uint16) {
 		if CHIP8.Clavier.IsPressed[i] {
 			key = true
 			CHIP8.Cpu.V[x] = uint8(i)
+		} else {
+			key = false
 		}
 	}
 	if !key {
